@@ -1,0 +1,13 @@
+{
+  "api": {
+    "port": 8000
+  },
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "db": "oms",
+    "sslmode": "disable",
+    "max_conns": 20
+  },
+  "token_ttl": 3600
+}

@@ -1,2 +1,4 @@
 # OrderManagmentSystem
-OMS with patterns
+OMS with patterns. Working on grpc
+
+
