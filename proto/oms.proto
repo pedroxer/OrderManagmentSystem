@@ -1,0 +1,149 @@
+syntax="proto3";
+
+package OMS;
+
+option go_package = "github.com/pedroxer/ordermanagmentsystem/internal/proto_gen";
+
+service User{
+  rpc Register(CreateUser) returns (UserResp);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+service Order{
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderResponse);
+  rpc GetAllOrdersByUser(GetAllOrdersByUserRequest) returns (stream GetAllOrdersByUserResponse);
+  rpc ChangeOrderState(ChangeOrderStateRequest) returns (ChangeOrderStateResponse);
+  rpc AddGoodToOrder(AddGoodToOrderRequest) returns (AddGoodToOrderResponse);
+  rpc RemoveGoodFromOrder(RemoveGoodFromOrderRequest) returns (RemoveGoodFromOrderResponse);
+}
+
+service Goods{
+  rpc AddGoods(stream AddGoodsRequest) returns (AddGoodsResponse);
+  rpc GetGood(GetGoodRequest) returns (GetGoodResponse);
+}
+
+service Payments{
+  rpc ProvidePayment (PaymentRequest) returns (PaymentResponse);
+}
+
+message CreateUser{
+  string login = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message LoginRequest{
+  string email = 1;
+  string password = 2;
+}
+
+message UserResp{
+  int64 userID = 1;
+  string login = 2;
+  string email = 3;
+  string role = 4;
+}
+
+message LoginResponse{
+  string token = 1;
+}
+
+message LogoutRequest{
+  string token = 1;
+}
+message LogoutResponse{
+  bool success = 1;
+}
+
+
+
+message PlaceOrderRequest{
+  string description = 1;
+  string orderType = 2;
+  int64 priority = 3;
+  repeated int64 goodsIds = 4;
+}
+
+message PlaceOrderResponse{
+  int64 orderID = 1;
+}
+
+message GetAllOrdersByUserRequest{
+  int64 userID = 1;
+}
+
+message GetAllOrdersByUserResponse{
+  int64 orderID = 1;
+  string state = 2;
+  string priority = 3;
+  string created = 4;
+  repeated GetGoodResponse goods = 5;
+}
+
+message ChangeOrderStateRequest{
+  int64 orderID = 1;
+  string newState = 2;
+}
+
+message ChangeOrderStateResponse{
+  bool success = 1;
+}
+
+message AddGoodToOrderRequest{
+  int64 orderID = 1;
+  int64 goodID = 2;
+}
+
+message AddGoodToOrderResponse{
+  repeated GetGoodResponse goods = 5;
+}
+
+message RemoveGoodFromOrderRequest{
+  int64 orderID = 1;
+  int64 goodID = 2;
+}
+
+message RemoveGoodFromOrderResponse{
+  repeated GetGoodResponse goods = 5;
+}
+
+
+
+message GetGoodResponse{
+  int64 goodID = 1;
+  string name = 2;
+  string category = 3;
+  float price = 4;
+  string description = 5;
+  float weight = 6;
+}
+
+message GetGoodRequest{
+  int64 goodID = 1;
+}
+
+message AddGoodsRequest{
+  string name = 1;
+  string category = 2;
+  float price = 3;
+  string description = 4;
+  float weight = 5;
+
+}
+
+message AddGoodsResponse{
+  repeated int64 goodID = 1;
+}
+
+
+message PaymentRequest{
+  int64 orderID = 1;
+  string paymentSystem = 2;
+  float amount = 3;
+}
+
+message PaymentResponse{
+  int64 paymentID = 1;
+  string paymentStatus = 2;
+}
