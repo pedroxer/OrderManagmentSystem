@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pedroxer/ordermanagmentsystem/internal/lib/jwt"
 	models "github.com/pedroxer/ordermanagmentsystem/internal/storage"
 	log "github.com/sirupsen/logrus"
@@ -15,16 +16,16 @@ type Auth struct {
 	log      *log.Logger
 	provider UserProvider
 	saver    UserSaver
-	TokenTTL int
+	TokenTTL time.Duration
 	Secret   string
 }
 
 type UserSaver interface {
-	SaveUser(ctx context.Context, email, password string) (int64, error)
+	SaveUser(ctx context.Context, params models.SaveUserParams) (int32, error)
 }
 
 type UserProvider interface {
-	GetUser(ctx context.Context, email string) (models.User, error)
+	GetUser(ctx context.Context, email pgtype.Text) (models.User, error)
 }
 
 var (
@@ -32,7 +33,7 @@ var (
 )
 
 // New returns a new Auth instance
-func New(log *log.Logger, saver UserSaver, provider UserProvider, tokenTTL int) *Auth {
+func New(log *log.Logger, saver UserSaver, provider UserProvider, tokenTTL time.Duration) *Auth {
 	return &Auth{
 		log:      log,
 		provider: provider,
@@ -45,7 +46,7 @@ func (a *Auth) Login(ctx context.Context, email, password string) (string, error
 	const op = "auth.Login"
 	log := a.log.WithField("op", op)
 
-	user, err := a.provider.GetUser(ctx, email)
+	user, err := a.provider.GetUser(ctx, pgtype.Text{email, true})
 	if err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
 			log.Warn("user not found", err)
@@ -61,7 +62,7 @@ func (a *Auth) Login(ctx context.Context, email, password string) (string, error
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCreds)
 	}
 
-	token, err := jwt.NewToken(user, a.Secret, time.Duration(a.TokenTTL)*time.Second)
+	token, err := jwt.NewToken(user, a.Secret, a.TokenTTL)
 	if err != nil {
 		log.Error("failed to create token: ", err)
 		return "", fmt.Errorf("%s: %w", op, err)
@@ -70,7 +71,7 @@ func (a *Auth) Login(ctx context.Context, email, password string) (string, error
 	return token, nil
 }
 
-func (a *Auth) RegisterUser(ctx context.Context, email, password string) (int64, error) {
+func (a *Auth) RegisterUser(ctx context.Context, login, email, password string) (int64, error) {
 	const op = "auth.RegisterUser"
 	log := a.log.WithField("op", op)
 
@@ -79,7 +80,12 @@ func (a *Auth) RegisterUser(ctx context.Context, email, password string) (int64,
 		log.Error("failed to generate password hash: ", err)
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
-	id, err := a.saver.SaveUser(ctx, email, string(passHash))
+	arg := models.SaveUserParams{
+		Username:     login,
+		Email:        pgtype.Text{email, true},
+		PasswordHash: string(passHash),
+	}
+	id, err := a.saver.SaveUser(ctx, arg)
 
 	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
@@ -90,5 +96,5 @@ func (a *Auth) RegisterUser(ctx context.Context, email, password string) (int64,
 		log.Error("failed to save user: ", err)
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
-	return id, nil
+	return int64(id), nil
 }

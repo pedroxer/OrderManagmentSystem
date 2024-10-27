@@ -5,9 +5,8 @@ package OMS;
 option go_package = "github.com/pedroxer/ordermanagmentsystem/internal/proto_gen";
 
 service User{
-  rpc Register(CreateUser) returns (UserResp);
+  rpc RegisterUser(CreateUser) returns (UserResp);
   rpc Login(LoginRequest) returns (LoginResponse);
-  rpc Logout(LogoutRequest) returns (LogoutResponse);
 }
 
 service Order{
@@ -48,14 +47,6 @@ message UserResp{
 message LoginResponse{
   string token = 1;
 }
-
-message LogoutRequest{
-  string token = 1;
-}
-message LogoutResponse{
-  bool success = 1;
-}
-
 
 
 message PlaceOrderRequest{

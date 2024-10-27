@@ -4,7 +4,7 @@ type Config struct {
 	Postgres      Postgres `json:"postgres"`
 	IsDevelopment bool     `env:"DEVELOPMENT"`
 	Serv          Api      `json:"api"`
-	TokenTTL      int      `json:"token_ttl"`
+	TokenTTL      string   `json:"token_ttl"`
 	Secret        string   `env:"SECRET,notEmpty"`
 }
 type Postgres struct {

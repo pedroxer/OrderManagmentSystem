@@ -18,6 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 	cfg := new(config.Config)
+
 	if err := json.Unmarshal(data, cfg); err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +30,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed connect to db %s", err)
 	}
-	application := app.NewApp(log, cfg.Serv.Port, conn, time.Duration(cfg.TokenTTL)*time.Second)
+
+	tokenTTL, err := time.ParseDuration(cfg.TokenTTL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	application := app.NewApp(log, cfg.Serv.Port, conn, tokenTTL)
 
 	if err := application.GRPCSrvr.Run(); err != nil {
 		log.Fatal(err)

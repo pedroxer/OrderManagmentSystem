@@ -3,6 +3,7 @@ package grpcapp
 import (
 	"fmt"
 	goodsGrpc "github.com/pedroxer/ordermanagmentsystem/internal/grpc/goods"
+	userGrpc "github.com/pedroxer/ordermanagmentsystem/internal/grpc/user"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
@@ -14,10 +15,11 @@ type App struct {
 	port       int
 }
 
-func NewApp(log *log.Logger, port int) *App {
+func NewApp(log *log.Logger, port int, auth userGrpc.Auth) *App {
 	server := grpc.NewServer()
 
 	goodsGrpc.Register(server)
+	userGrpc.Register(server, auth)
 	return &App{
 		logger:     log,
 		grpcServer: server,
