@@ -5,6 +5,7 @@ type Config struct {
 	IsDevelopment bool     `env:"DEVELOPMENT"`
 	Serv          Api      `json:"api"`
 	TokenTTL      int      `json:"token_ttl"`
+	Secret        string   `env:"SECRET,notEmpty"`
 }
 type Postgres struct {
 	Host     string `json:"host"`
