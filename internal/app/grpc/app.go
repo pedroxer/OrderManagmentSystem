@@ -2,6 +2,7 @@ package grpcapp
 
 import (
 	"fmt"
+	"github.com/pedroxer/ordermanagmentsystem/internal/grpc/auth_interceptor"
 	goodsGrpc "github.com/pedroxer/ordermanagmentsystem/internal/grpc/goods"
 	userGrpc "github.com/pedroxer/ordermanagmentsystem/internal/grpc/user"
 	log "github.com/sirupsen/logrus"
@@ -15,8 +16,9 @@ type App struct {
 	port       int
 }
 
-func NewApp(log *log.Logger, port int, auth userGrpc.Auth) *App {
-	server := grpc.NewServer()
+func NewApp(log *log.Logger, port int, auth userGrpc.Auth, maker auth_interceptor.TokenMaker) *App {
+	interceptor := auth_interceptor.New(maker)
+	server := grpc.NewServer(grpc.UnaryInterceptor(interceptor.Unary()), grpc.StreamInterceptor(interceptor.Stream()))
 
 	goodsGrpc.Register(server)
 	userGrpc.Register(server, auth)

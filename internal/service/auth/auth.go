@@ -5,19 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/pedroxer/ordermanagmentsystem/internal/lib/jwt"
+	"github.com/pedroxer/ordermanagmentsystem/internal/grpc/auth_interceptor"
 	models "github.com/pedroxer/ordermanagmentsystem/internal/storage"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 type Auth struct {
-	log      *log.Logger
-	provider UserProvider
-	saver    UserSaver
-	TokenTTL time.Duration
-	Secret   string
+	log        *log.Logger
+	provider   UserProvider
+	saver      UserSaver
+	tokenMaker auth_interceptor.TokenMaker
 }
 
 type UserSaver interface {
@@ -33,12 +31,12 @@ var (
 )
 
 // New returns a new Auth instance
-func New(log *log.Logger, saver UserSaver, provider UserProvider, tokenTTL time.Duration) *Auth {
+func New(log *log.Logger, saver UserSaver, provider UserProvider, tokenMaker auth_interceptor.TokenMaker) *Auth {
 	return &Auth{
-		log:      log,
-		provider: provider,
-		saver:    saver,
-		TokenTTL: tokenTTL,
+		log:        log,
+		provider:   provider,
+		saver:      saver,
+		tokenMaker: tokenMaker,
 	}
 }
 
@@ -62,7 +60,7 @@ func (a *Auth) Login(ctx context.Context, email, password string) (string, error
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCreds)
 	}
 
-	token, err := jwt.NewToken(user, a.Secret, a.TokenTTL)
+	token, err := a.tokenMaker.NewToken(user)
 	if err != nil {
 		log.Error("failed to create token: ", err)
 		return "", fmt.Errorf("%s: %w", op, err)
