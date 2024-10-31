@@ -8,7 +8,6 @@ import (
 	"github.com/pedroxer/ordermanagmentsystem/internal/database"
 	log "github.com/sirupsen/logrus"
 	"os"
-	"time"
 )
 
 func main() {
@@ -31,11 +30,7 @@ func main() {
 		log.Fatalf("failed connect to db %s", err)
 	}
 
-	tokenTTL, err := time.ParseDuration(cfg.TokenTTL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	application := app.NewApp(log, cfg.Serv.Port, conn, tokenTTL)
+	application := app.NewApp(log, cfg.Serv.Port, conn, *cfg)
 
 	if err := application.GRPCSrvr.Run(); err != nil {
 		log.Fatal(err)
